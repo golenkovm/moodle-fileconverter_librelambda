@@ -95,13 +95,11 @@ class converter implements \core_files\converter_interface {
      * @return \Aws\S3\S3Client
      */
     public function create_client($handler=null) {
-        $connectionoptions = array(
-            'version' => 'latest',
-            'region' => $this->config->api_region,
-            'credentials' => [
-                'key' => $this->config->api_key,
-                'secret' => $this->config->api_secret
-            ]);
+        $connectionoptions = array('version' => 'latest', 'region' => $this->config->api_region,);
+
+        if (empty($this->config->usesdkcreds)) {
+            $connectionoptions['credentials'] = array('key' => $this->config->api_key, 'secret' => $this->config->api_secret);
+        }
 
         // Allow handler overriding for testing.
         if ($handler != null) {
@@ -154,8 +152,8 @@ class converter implements \core_files\converter_interface {
     private static function is_config_set(\fileconverter_librelambda\converter $converter) {
         $isset = true;
 
-        if (empty($converter->config->api_key) ||
-            empty($converter->config->api_secret) ||
+        if ((empty($converter->config->api_key) && empty($converter->config->usesdkcreds)) ||
+            (empty($converter->config->api_secret) && empty($converter->config->usesdkcreds)) ||
             empty($converter->config->s3_input_bucket) ||
             empty($converter->config->s3_output_bucket) ||
             empty($converter->config->api_region)) {
@@ -456,5 +454,30 @@ class converter implements \core_files\converter_interface {
             'doc', 'docx', 'rtf', 'xls', 'xlsx', 'ppt', 'pptx', 'html', 'odt', 'ods', 'txt', 'png', 'jpg', 'gif', 'pdf'
             );
         return implode(', ', $conversions);
+    }
+
+    /**
+     * Getter for usesdkcreds setting.
+     *
+     * @return string
+     */
+    public function get_usesdkcreds() {
+        if (isset($this->config->usesdkcreds)) {
+            return $this->config->usesdkcreds;
+        }
+        return '';
+    }
+
+    /**
+     * Setter for usesdkcreds setting.
+     *
+     * @param boolean $value Value to be set.
+     */
+    public function set_usesdkcreds($value) {
+        if ($value) {
+            $this->config->usesdkcreds = '1';
+        } else {
+            $this->config->usesdkcreds = '0';
+        }
     }
 }

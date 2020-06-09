@@ -26,16 +26,34 @@ defined('MOODLE_INTERNAL') || die();
 
 if ($hassiteconfig) {
 
-    // Basic settings.
-    $settings->add(new admin_setting_configtext('fileconverter_librelambda/api_key',
+    $text = '';
+    $converter = new \fileconverter_librelambda\converter();
+    if (!$converter->get_usesdkcreds()) {
+        $converter->set_usesdkcreds(true);
+        if ($converter::are_requirements_met()) {
+            $text = $OUTPUT->notification(get_string('settings:aws:sdkcredsok', 'fileconverter_librelambda'), 'notifysuccess');
+        } else {
+            $text = $OUTPUT->notification(get_string('settings:aws:sdkcredserror', 'fileconverter_librelambda'), 'warning');
+        }
+        $converter->set_usesdkcreds(false);
+    }
+
+    $settings->add(new \admin_setting_configcheckbox('fileconverter_librelambda/usesdkcreds',
+        new \lang_string('settings:aws:usesdkcreds', 'fileconverter_librelambda'),
+        $text, ''));
+
+    if (!$converter->get_usesdkcreds()) {
+        // Basic settings.
+        $settings->add(new admin_setting_configtext('fileconverter_librelambda/api_key',
             get_string('settings:aws:key', 'fileconverter_librelambda'),
             get_string('settings:aws:key_help', 'fileconverter_librelambda'),
             ''));
 
-    $settings->add(new admin_setting_configpasswordunmask('fileconverter_librelambda/api_secret',
+        $settings->add(new admin_setting_configpasswordunmask('fileconverter_librelambda/api_secret',
             get_string('settings:aws:secret', 'fileconverter_librelambda'),
             get_string('settings:aws:secret_help', 'fileconverter_librelambda'),
             ''));
+    }
 
     $settings->add(new admin_setting_configtext('fileconverter_librelambda/s3_input_bucket',
             get_string('settings:aws:input_bucket', 'fileconverter_librelambda'),
